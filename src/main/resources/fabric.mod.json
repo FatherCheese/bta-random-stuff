@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "examplemod",
+  "id": "random",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This mod aims to help new BTA modders.",
+  "name": "Random Stuff",
+  "description": "An assortment of random experiments!",
   "authors": [
-    "Turnip Labs"
+    "Cookie Cakes"
   ],
   "contact": {
     "homepage": "",
@@ -19,20 +19,20 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-			"turniplabs.examplemod.ExampleMod"
+      "cookie.random.RandomStuff"
     ],
 		"beforeGameStart": [
-			"turniplabs.examplemod.ExampleMod"
+          "cookie.random.RandomStuff"
 		],
 		"afterGameStart": [
-			"turniplabs.examplemod.ExampleMod"
+          "cookie.random.RandomStuff"
 		],
 		"recipesReady": [
-			"turniplabs.examplemod.ExampleMod"
+          "cookie.random.RandomStuff"
 		]
 	},
   "mixins": [
-      "examplemod.mixins.json"
+		"random.mixins.json"
   ],
 
   "depends": {
