@@ -4,10 +4,10 @@ import com.mojang.nbt.CompoundTag;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.world.World;
 
-public class BuilderWaypoint extends Entity {
+public class EntityWaypoint extends Entity {
 	public int targetBlock;
 
-	public BuilderWaypoint(World world) {
+	public EntityWaypoint(World world) {
 		super(world);
 	}
 

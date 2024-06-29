@@ -1,11 +1,13 @@
 package cookie.random.core.entity;
 
-import com.mojang.nbt.CompoundTag;
+import cookie.random.RandomStuff;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.block.Block;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.EntityPathfinder;
+import net.minecraft.core.item.Item;
 import net.minecraft.core.item.ItemStack;
+import net.minecraft.core.util.helper.DamageType;
 import net.minecraft.core.util.helper.Side;
 import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.World;
@@ -22,8 +24,8 @@ public class EntityBuilder extends EntityPathfinder {
 	public boolean swinging = false;
 	public boolean shouldSwing = false;
 	public int swingTime = 0;
-	public EntityBuilder.State state = EntityBuilder.State.ROAMING;
-	public BuilderWaypoint buildTarget;
+	public State state = State.ROAMING;
+	public EntityWaypoint buildTarget;
 	public static final BuilderSchematic schema = new BuilderSchematic();
 	public static final int xSchemaOrigin = 113;
 	public static final int ySchemaOrigin = 72;
@@ -37,129 +39,104 @@ public class EntityBuilder extends EntityPathfinder {
 	public int age = 0;
 	public static boolean initialized = false;
 	private int buildStep = 0;
-	private final boolean verbose = false;
+	private final boolean verbose = true;
+	private final int verboseTimer = 0;
 	public BuilderInventory inventory = new BuilderInventory();
 	private Path path;
 
 	public EntityBuilder(World world) {
 		super(world);
-	}
-
-	@Override
-	public void addAdditionalSaveData(CompoundTag tag) {
-		super.addAdditionalSaveData(tag);
-	}
-
-	@Override
-	public void readAdditionalSaveData(CompoundTag tag) {
-		super.readAdditionalSaveData(tag);
+		this.setSize(0.6F, 1.8F);
 	}
 
 	public void swing() {
-		swingTime = -1;
-		swinging = true;
+		this.swingTime = -1;
+		this.swinging = true;
 	}
 
 	@Override
 	protected Entity findPlayerToAttack() {
-		return state == State.MOVING && this.buildTarget != null && !(this.buildTarget.distanceTo(this) < 2.0F) ? this.buildTarget : null;
+		return this.state == State.MOVING && this.buildTarget != null && !(this.buildTarget.distanceTo(this) < 2.0F) ? this.buildTarget : null;
 	}
 
 	public void setBuildTarget(int x, int y, int z, int blockID) {
-		if (this.buildTarget != null && this.buildTarget instanceof BuilderWaypoint) {
+		if (this.buildTarget != null && this.buildTarget instanceof EntityWaypoint) {
 			buildTarget.remove();
-			buildTarget = null;
+			this.buildTarget = null;
 		}
 
-
-		BuilderWaypoint waypoint = new BuilderWaypoint(world);
+		EntityWaypoint waypoint = new EntityWaypoint(this.world);
 		waypoint.targetBlock = blockID;
 		waypoint.setPos(x, y, z);
+		world.entityJoinedWorld(waypoint);
 		this.buildTarget = waypoint;
 		this.entityToAttack = this.buildTarget;
 		if (this.verbose) {
 			System.out.println("Build target set to " + blockID + " at " + x + ", " + y + ", " + z);
 		}
 
-		int var6 = (int)Math.floor(this.bb.minY);
-		if (buildTarget.y < (double)(var6 - 1)) {
+		int var6 = (int) Math.floor(this.bb.minY);
+		if (this.buildTarget.y < (double) (var6 - 1)) {
 			Vec3d vec3d = Vec3d.createVector(this.x, this.y, this.z).subtract(Vec3d.createVector(this.buildTarget.x, this.buildTarget.y, this.buildTarget.z)).normalize();
-			push(vec3d.xCoord * 0.6F, 0.4F, vec3d.zCoord * 0.6F);
+			this.push(vec3d.xCoord * 0.6F, 0.4F, vec3d.zCoord * 0.6F);
 		}
 	}
 
-
-	private int getStackHeight(int x, int z) {
-		int y = 0;
+	private int getStackHeight(int integer1, int integer2) {
+		int var3 = 0;
 
 		while (
-			world.getBlockId(x, y + 1, z) != 0
-				|| world.getBlockId(x, y + 2, z) != 0
-				|| world.getBlockId(x, y + 3, z) != 0
+			this.world.getBlockId(integer1, var3 + 1, integer2) != 0
+				|| this.world.getBlockId(integer1, var3 + 2, integer2) != 0
+				|| this.world.getBlockId(integer1, var3 + 3, integer2) != 0
 		) {
-			y++;
-		}
-
-		return y;
-	}
-
-	private int getHeighestNeighborStack() {
-		int mathX = (int)Math.floor(this.x);
-		int mathZ = (int)Math.floor(this.z);
-		int var3 = 0;
-		if (this.getStackHeight(mathX + 1, mathZ) > var3) {
-			var3 = this.getStackHeight(mathX + 1, mathZ);
-		}
-
-		if (this.getStackHeight(mathX, mathZ + 1) > var3) {
-			var3 = this.getStackHeight(mathX, mathZ + 1);
-		}
-
-		if (this.getStackHeight(mathX - 1, mathZ + 1) > var3) {
-			var3 = this.getStackHeight(mathX - 1, mathZ + 1);
-		}
-
-		if (this.getStackHeight(mathX - 1, mathZ) > var3) {
-			var3 = this.getStackHeight(mathX - 1, mathZ);
-		}
-
-		if (this.getStackHeight(mathX - 1, mathZ - 1) > var3) {
-			var3 = this.getStackHeight(mathX - 1, mathZ - 1);
-		}
-
-		if (this.getStackHeight(mathX + 1, mathZ + 1) > var3) {
-			var3 = this.getStackHeight(mathX + 1, mathZ + 1);
-		}
-
-		if (this.getStackHeight(mathX, mathZ - 1) > var3) {
-			var3 = this.getStackHeight(mathX, mathZ - 1);
-		}
-
-		if (this.getStackHeight(mathX + 1, mathZ - 1) > var3) {
-			var3 = this.getStackHeight(mathX + 1, mathZ - 1);
+			var3++;
 		}
 
 		return var3;
 	}
 
-
-	public void spawnBuilder() {
-		EntityBuilder builder = new EntityBuilder(minecraft.theWorld);
-		builder.minecraft = this.minecraft;
-		double var2 = 119.0 + Math.random() * 10.0;
-		double var4 = 70.0 + Math.random() * 10.0;
-		double var6 = 170.0 + Math.random() * 10.0;
-		builder.moveTo(var2, var4, var6, 1263.59F, 4.0F);
-		if (builder.getCanSpawnHere()) {
-			this.minecraft.theWorld.entityJoinedWorld(builder);
-		} else {
-			this.spawnBuilder();
+	private int getHighestNeighbourStack() {
+		int var1 = (int) Math.floor(this.x);
+		int var2 = (int) Math.floor(this.z);
+		int var3 = (int) this.y;
+		if (this.getStackHeight(var1 + 1, var2) > var3) {
+			var3 = this.getStackHeight(var1 + 1, var2);
 		}
+
+		if (this.getStackHeight(var1, var2 + 1) > var3) {
+			var3 = this.getStackHeight(var1, var2 + 1);
+		}
+
+		if (this.getStackHeight(var1 - 1, var2 + 1) > var3) {
+			var3 = this.getStackHeight(var1 - 1, var2 + 1);
+		}
+
+		if (this.getStackHeight(var1 - 1, var2) > var3) {
+			var3 = this.getStackHeight(var1 - 1, var2);
+		}
+
+		if (this.getStackHeight(var1 - 1, var2 - 1) > var3) {
+			var3 = this.getStackHeight(var1 - 1, var2 - 1);
+		}
+
+		if (this.getStackHeight(var1 + 1, var2 + 1) > var3) {
+			var3 = this.getStackHeight(var1 + 1, var2 + 1);
+		}
+
+		if (this.getStackHeight(var1, var2 - 1) > var3) {
+			var3 = this.getStackHeight(var1, var2 - 1);
+		}
+
+		if (this.getStackHeight(var1 + 1, var2 - 1) > var3) {
+			var3 = this.getStackHeight(var1 + 1, var2 - 1);
+		}
+
+		return var3;
 	}
 
-
 	@Override
-	public void updatePlayerActionState() {
+	protected void updatePlayerActionState() {
 		this.age++;
 		if (!initialized) {
 			initialized = true;
@@ -168,19 +145,18 @@ public class EntityBuilder extends EntityPathfinder {
 				for (int var2 = 0; var2 < schema.start.length; var2++) {
 					for (int var3 = 0; var3 < schema.start[var2][var1].length; var3++) {
 						if (schema.start[var2][var1][var3] != 0) {
-							world.setBlockWithNotify(113 + var2, 72 + var1, 139 + var3, schema.start[var2][var1][var3]);
+							this.world.setBlockWithNotify(113 + var2, 72 + var1, 139 + var3, schema.start[var2][var1][var3]);
 							int var4 = 0;
 
 							while (this.world.getBlockId(113 + var2, 72 + var1 - var4 - 1, 139 + var3) == 0) {
 								var4++;
-								this.world.setBlockWithNotify(113 + var2, 72 + var1 - var4, 139 + var3, 5);
+								this.world.setBlockWithNotify(113 + var2, 72 + var1 - var4, 139 + var3, Block.planksOak.id);
 							}
 						}
 					}
 				}
 			}
 		}
-
 
 		this.heartsHalvesLife = 20;
 		if (this.pushStep < 50) {
@@ -190,27 +166,19 @@ public class EntityBuilder extends EntityPathfinder {
 			}
 		}
 
-
 		float var24 = 40.0F;
 		this.isJumping = false;
-		int var25 = (int)Math.floor(this.x);
-		int var26 = (int)Math.floor(this.bb.minY);
-		int var27 = (int)Math.floor(this.z);
+		int var25 = (int) Math.floor(this.x);
+		int var26 = (int) Math.floor(this.y) - 1;
+		int var27 = (int) Math.floor(this.z);
 		if (this.age > 3000 && this.random.nextInt(500) == 0) {
-			this.world.createExplosion(this, var25, var26, var27, 1.0F);
+			this.world.createExplosion(this, (double) var25, (double) var26, (double) var27, 1.0F);
 			this.remove();
-			if (world.isNewWorld) {
-				this.spawnBuilder();
-				this.spawnBuilder();
-				this.spawnBuilder();
-				this.spawnBuilder();
-			}
 		}
 
-		if (this.world.getBlockId(var25, var26, var27) != 0 || this.buildTarget != null && this.buildTarget.x == (double)var25 && this.buildTarget.z == (double)var27) {
+		if (this.world.getBlockId(var25, var26, var27) != 0 || this.buildTarget != null && this.buildTarget.x == (double) var25 && this.buildTarget.z == (double) var27) {
 			this.isJumping = true;
 		}
-
 
 		if (this.pushStep == 50 && this.buildTarget != null && this.random.nextInt(300) == 0) {
 			Vec3d var28 = Vec3d.createVector(this.x, this.bb.minY, this.z).subtract(Vec3d.createVector(this.buildTarget.x, this.buildTarget.y, this.buildTarget.z)).normalize();
@@ -218,21 +186,20 @@ public class EntityBuilder extends EntityPathfinder {
 			this.pushStep--;
 		}
 
-
 		if (this.state == State.MOVING) {
 			if (this.entityToAttack == null) {
 				this.entityToAttack = this.findPlayerToAttack();
 			} else if (!this.entityToAttack.isAlive()) {
 				this.entityToAttack = null;
 			} else {
-				float distanceTo = this.entityToAttack.distanceTo(this);
+				float var29 = this.entityToAttack.distanceTo(this);
 				if (this.canEntityBeSeen(this.entityToAttack)) {
-					this.attackBlockedEntity(this.entityToAttack, distanceTo);
+					this.attackEntity(this.entityToAttack, var29);
 				}
 			}
 
 			if (this.entityToAttack != null) {
-				path = world.getPathToEntity(this, entityToAttack, var24);
+				this.path = world.getPathToEntity(this, entityToAttack, var24);
 			}
 		}
 
@@ -257,10 +224,10 @@ public class EntityBuilder extends EntityPathfinder {
 			}
 
 			if (this.verbose) {
-				System.out.println("Checking if heighest neighobur stack (" + this.getHeighestNeighborStack() + ") is > " + var26);
+				System.out.println("Checking if heighest neighbour stack (" + this.getHighestNeighbourStack() + ") is > " + var26);
 			}
 
-			if (this.getHeighestNeighborStack() > var26) {
+			if (this.getHighestNeighbourStack() > var26) {
 				if (this.verbose) {
 					System.out.println("Building ourselves up.");
 				}
@@ -283,7 +250,8 @@ public class EntityBuilder extends EntityPathfinder {
 				}
 
 				this.isJumping = true;
-				this.world.setBlockWithNotify(var25, var26, var27, 5);
+				this.world.setBlockWithNotify(var25, var26, var27, Block.planksOak.id);
+				this.swing();
 				this.stuckCount = 0;
 				this.state = State.MOVING;
 				return;
@@ -352,7 +320,7 @@ public class EntityBuilder extends EntityPathfinder {
 										);
 								}
 
-								this.setBuildTarget(113 + var6, 72 + var30 - var9, 139 + var7, 5);
+								this.setBuildTarget(113 + var6, 72 + var30 - var9, 139 + var7, Block.planksOak.id);
 							} else {
 								if (this.verbose) {
 									System.out.println("I should build " + schema.target[var6][var30][var7] + " at " + (113 + var6) + ", " + (72 + var30) + ", " + (139 + var7));
@@ -403,7 +371,7 @@ public class EntityBuilder extends EntityPathfinder {
 				for (int var43 = -var32; var43 < schema.target.length + var32; var43++) {
 					for (int var48 = -var32; var48 < schema.target[0][0].length + var32; var48++) {
 						int var53 = this.world.getBlockId(113 + var43, 72 + var38, 139 + var48);
-						if (var53 == 5) {
+						if (var53 == Block.planksOak.id) {
 							int var10 = 0;
 
 							while (this.world.getBlockId(113 + var43, 72 + var38 - var10 - 1, 139 + var48) == 0) {
@@ -411,7 +379,7 @@ public class EntityBuilder extends EntityPathfinder {
 							}
 
 							if (var10 > 0) {
-								this.setBuildTarget(113 + var43, 72 + var38 - var10, 139 + var48, 5);
+								this.setBuildTarget(113 + var43, 72 + var38 - var10, 139 + var48, Block.planksOak.id);
 							} else {
 								this.setBuildTarget(113 + var43, 72 + var38, 139 + var48, 0);
 							}
@@ -438,14 +406,14 @@ public class EntityBuilder extends EntityPathfinder {
 				return;
 			}
 
-			if (this.buildTarget.distanceTo(this) > 3.0F) {
+			if (this.buildTarget.distanceTo(this) > 4.0F) {
 				this.shouldSwing = false;
-				this.onGround = false;
+				this.hasAttacked = false;
 				this.state = State.MOVING;
 				return;
 			}
 
-			this.onGround = true;
+			this.hasAttacked = true;
 			this.shouldSwing = true;
 			this.isJumping = false;
 			if (this.buildStep < 10) {
@@ -454,12 +422,12 @@ public class EntityBuilder extends EntityPathfinder {
 				this.buildStep = 0;
 				if (this.buildStep == 0 && this.verbose) {
 					System.out
-						.println("Building at " + (int)Math.floor(this.buildTarget.x) + ", " + (int)Math.floor(this.buildTarget.y) + ", " + (int)Math.floor(this.buildTarget.z));
+						.println("Building at " + (int) Math.floor(this.buildTarget.x) + ", " + (int) Math.floor(this.buildTarget.y) + ", " + (int) Math.floor(this.buildTarget.z));
 				}
 
-				int var33 = (int)Math.floor(this.buildTarget.x);
-				int var39 = (int)Math.floor(this.buildTarget.y);
-				int var44 = (int)Math.floor(this.buildTarget.z);
+				int var33 = (int) Math.floor(this.buildTarget.x);
+				int var39 = (int) Math.floor(this.buildTarget.y);
+				int var44 = (int) Math.floor(this.buildTarget.z);
 				int var49 = this.world.getBlockId(var33, var39, var44);
 				if (var49 != 0 && this.buildTarget.targetBlock != var49) {
 					if (this.verbose) {
@@ -467,14 +435,14 @@ public class EntityBuilder extends EntityPathfinder {
 					}
 
 					if (this.buildTarget.targetBlock != 0) {
-						Block.blocksList[var49].onBlockRemoved(world, var33, var39, var44, world.getBlockMetadata(var33, var39, var44));
+						Block.blocksList[var49].onBlockRemoved(this.world, var33, var39, var44, this.world.getBlockMetadata(var33, var39, var44));
 					}
 
 					this.world.setBlockWithNotify(var33, var39, var44, 0);
 					if (this.buildTarget.targetBlock == 0) {
 						this.stuckCount = 0;
 						this.shouldSwing = false;
-						this.onGround = false;
+						this.hasAttacked = false;
 						this.buildTarget = null;
 						this.state = State.ROAMING;
 					}
@@ -482,9 +450,9 @@ public class EntityBuilder extends EntityPathfinder {
 					return;
 				}
 
-				if (this.buildTarget.targetBlock != 0 && !this.world.canBlockBePlacedAt(this.buildTarget.targetBlock, var33, var39, var44, false, Side.NONE)) {
+				if (this.buildTarget.targetBlock != 0 && !this.world.canBlockBePlacedAt(this.buildTarget.targetBlock, var33, var39, var44, false, Side.TOP)) {
 					if (this.verbose) {
-						System.out.println("May not place here, jumping");
+						System.out.println("May not place here, isJumping");
 					}
 
 					if (this.pushStep == 50) {
@@ -509,7 +477,7 @@ public class EntityBuilder extends EntityPathfinder {
 
 					this.stuckCount = 0;
 					this.shouldSwing = false;
-					this.onGround = false;
+					this.hasAttacked = false;
 					this.buildTarget = null;
 					this.state = State.ROAMING;
 					return;
@@ -519,7 +487,7 @@ public class EntityBuilder extends EntityPathfinder {
 
 		if (this.swinging) {
 			this.swingTime++;
-			if (this.swingTime == 8) {
+			if (this.swingTime >= 8) {
 				this.swingTime = 0;
 				this.swinging = false;
 			}
@@ -527,7 +495,7 @@ public class EntityBuilder extends EntityPathfinder {
 			this.swingTime = 0;
 		}
 
-		this.swingProgress = (float)this.swingTime / 8.0F;
+		this.swingProgress = (float) this.swingTime / 8.0F;
 		if (this.entityToAttack == null) {
 			this.entityToAttack = this.findPlayerToAttack();
 			if (this.entityToAttack != null) {
@@ -538,16 +506,16 @@ public class EntityBuilder extends EntityPathfinder {
 		} else {
 			float var34 = this.entityToAttack.distanceTo(this);
 			if (this.canEntityBeSeen(this.entityToAttack)) {
-				this.attackBlockedEntity(this.entityToAttack, var34);
+				this.attackEntity(this.entityToAttack, var34);
 			}
 		}
 
-		if (this.onGround) {
+		if (this.hasAttacked) {
 			this.moveStrafing = 0.0F;
 			this.moveForward = 0.0F;
 			this.isJumping = false;
 		} else {
-			if (this.onGround || this.entityToAttack == null || this.path != null && this.random.nextInt(20) != 0) {
+			if (this.hasAttacked || this.entityToAttack == null || this.path != null && this.random.nextInt(20) != 0) {
 				if (this.path == null && this.random.nextInt(80) == 0 || this.random.nextInt(80) == 0) {
 					boolean var35 = false;
 					int var40 = -1;
@@ -556,9 +524,9 @@ public class EntityBuilder extends EntityPathfinder {
 					float var54 = -99999.0F;
 
 					for (int var56 = 0; var56 < 10; var56++) {
-						int var11 = (int) Math.floor(this.x + (double)this.random.nextInt(13) - 6.0);
-						int var12 = (int) Math.floor(this.y + (double)this.random.nextInt(7) - 3.0);
-						int var13 = (int) Math.floor(this.z + (double)this.random.nextInt(13) - 6.0);
+						int var11 = (int) Math.floor(this.x + (double) this.random.nextInt(13) - 6.0);
+						int var12 = (int) Math.floor(this.y + (double) this.random.nextInt(7) - 3.0);
+						int var13 = (int) Math.floor(this.z + (double) this.random.nextInt(13) - 6.0);
 						float var14 = this.getBlockPathWeight(var11, var12, var13);
 						if (var14 > var54) {
 							var54 = var14;
@@ -583,7 +551,7 @@ public class EntityBuilder extends EntityPathfinder {
 			this.xRot = 0.0F;
 			if (this.path != null && this.random.nextInt(100) != 0) {
 				Vec3d var52 = this.path.getPos(this);
-				double var55 = (double)(this.bbWidth * 2.0F);
+				double var55 = this.bbWidth * 2.0F;
 
 				while (var52 != null && var52.squareDistanceTo(this.x, var52.yCoord, this.z) < var55 * var55) {
 					this.path.next();
@@ -591,7 +559,7 @@ public class EntityBuilder extends EntityPathfinder {
 						var52 = null;
 						this.path = null;
 					} else {
-						var52 = this.path.getPos(this);
+						var52 = path.getPos(this);
 					}
 				}
 
@@ -599,8 +567,8 @@ public class EntityBuilder extends EntityPathfinder {
 				if (var52 != null) {
 					double var57 = var52.xCoord - this.x;
 					double var58 = var52.zCoord - this.z;
-					double var15 = var52.yCoord - (double)var36;
-					float var17 = (float)(Math.atan2(var58, var57) * 180.0 / (float) Math.PI) - 90.0F;
+					double var15 = var52.yCoord - (double) var36;
+					float var17 = (float) (Math.atan2(var58, var57) * 180.0 / (float) Math.PI) - 90.0F;
 					float var18 = var17 - this.yRot;
 					this.moveForward = this.moveSpeed;
 
@@ -621,11 +589,11 @@ public class EntityBuilder extends EntityPathfinder {
 					}
 
 					this.yRot += var18;
-					if (this.onGround && this.entityToAttack != null) {
+					if (this.hasAttacked && this.entityToAttack != null) {
 						double var19 = this.entityToAttack.x - this.x;
 						double var21 = this.entityToAttack.z - this.z;
 						float var23 = this.yRot;
-						this.yRot = (float)(Math.atan2(var21, var19) * 180.0 / (float) Math.PI) - 90.0F;
+						this.yRot = (float) (Math.atan2(var21, var19) * 180.0 / (float) Math.PI) - 90.0F;
 						var18 = (var23 - this.yRot + 90.0F) * (float) Math.PI / 180.0F;
 						this.moveStrafing = (float) (-Math.sin(var18) * this.moveForward * 1.0F);
 						this.moveForward = (float) (Math.cos(var18) * this.moveForward * 1.0F);
@@ -656,12 +624,12 @@ public class EntityBuilder extends EntityPathfinder {
 
 	@Override
 	public ItemStack getHeldItem() {
-		return inventory.getSelected();
+		return Item.toolPickaxeIron.getDefaultStack();
 	}
 
 	@Override
 	public void onLivingUpdate() {
-		if (!swinging && shouldSwing) {
+		if (!this.swinging && this.shouldSwing) {
 			this.swing();
 		}
 
@@ -669,14 +637,19 @@ public class EntityBuilder extends EntityPathfinder {
 	}
 
 	@Override
-	protected float getBlockPathWeight(int x, int y, int z) {
+	protected float getBlockPathWeight(int integer1, int integer2, int integer3) {
 		return 10.0F;
+	}
+
+	@Override
+	public boolean hurt(Entity attacker, int damage, DamageType type) {
+		return super.hurt(attacker, damage, type);
 	}
 
 	public enum State {
 		BUILDING,
 		MOVING,
 		ROAMING,
-		STUCK
+		STUCK;
 	}
 }
