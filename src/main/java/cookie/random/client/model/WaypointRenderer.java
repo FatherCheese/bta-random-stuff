@@ -1,5 +1,6 @@
-package cookie.random.core.entity;
+package cookie.random.client.model;
 
+import cookie.random.core.entity.EntityWaypoint;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.tessellator.Tessellator;
 

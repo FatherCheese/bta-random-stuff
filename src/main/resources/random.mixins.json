@@ -4,6 +4,7 @@
   "package": "cookie.random.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "EntityPigZombieMixin"
   ],
   "client": [
   ],

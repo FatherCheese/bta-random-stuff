@@ -244,20 +244,22 @@ public class EntityBuilder extends EntityPathfinder {
 					this.world.setBlockWithNotify(var25, var26 + 3, var27, 0);
 				}
 
-				if (this.pushStep == 50) {
-					this.pushStep--;
-					this.push(Math.random() * 0.6 - 0.3, 0.4, Math.random() * 0.6 - 0.3);
-				}
+//				if (this.pushStep == 50) {
+//					this.pushStep--;
+//					this.push(Math.random() * 0.6 - 0.3, 0.4, Math.random() * 0.6 - 0.3);
+//				}
 
 				this.isJumping = true;
-				this.world.setBlockWithNotify(var25, var26, var27, Block.planksOak.id);
+				if (world.getBlock(var25, var26, var27) == null && world.getBlock(var25, var26 - 1, var27) != null) {
+					this.world.setBlockWithNotify(var25, var26, var27, Block.planksOak.id);
+				}
 				this.swing();
 				this.stuckCount = 0;
 				this.state = State.MOVING;
 				return;
 			}
 
-			if (this.pushStep == 50) {
+			if (this.pushStep == 50 && buildTarget == null) {
 				if (this.verbose) {
 					System.out.println("Nudging ourselves");
 				}
@@ -268,6 +270,23 @@ public class EntityBuilder extends EntityPathfinder {
 				this.stuckCount = 0;
 				this.state = State.MOVING;
 				return;
+			}
+
+			if (entityToAttack.y < y) {
+				isJumping = false;
+				if (verbose) {
+					System.out.println("buildTarget is below us, attempting to dig down...");
+				}
+
+				if (world.getBlockId(var25, var26 - 1, var27) == schema.target[var25][var26 - 1][var27]) {
+					if (verbose) {
+						System.out.println("Block below is part of the build!");
+					}
+
+					pushStep = 50;
+				} else {
+					world.setBlockWithNotify(var25, var26 - 1, var27, 0);
+				}
 			}
 		}
 
@@ -281,7 +300,7 @@ public class EntityBuilder extends EntityPathfinder {
 
 			if (this.entityToAttack.distanceTo(this) <= 3.0F) {
 				this.state = State.BUILDING;
-				this.faceEntity(this.buildTarget, 30.0F, 30.0F);
+				this.faceEntity(this.buildTarget, 30.0F, -30.0F);
 				this.entityToAttack = null;
 				return;
 			}
@@ -643,7 +662,8 @@ public class EntityBuilder extends EntityPathfinder {
 
 	@Override
 	public boolean hurt(Entity attacker, int damage, DamageType type) {
-		return super.hurt(attacker, damage, type);
+		if (type != DamageType.FALL) return super.hurt(attacker, damage, type);
+		return false;
 	}
 
 	public enum State {
