@@ -1,4 +1,4 @@
-package cookie.random.mixin;
+package cookie.random.extra.mixin;
 
 import cookie.random.core.entity.EntityPigman;
 import net.minecraft.core.entity.Entity;
@@ -6,7 +6,6 @@ import net.minecraft.core.entity.monster.EntityPigZombie;
 import net.minecraft.core.entity.monster.EntityZombie;
 import net.minecraft.core.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.Inject;
 
 import java.util.List;
 

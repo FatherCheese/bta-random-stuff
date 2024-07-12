@@ -1,14 +1,11 @@
 package cookie.random;
 
-import cookie.random.client.model.PigmanModelVanilla;
-import cookie.random.client.model.PigmanRenderer;
+import cookie.random.client.model.newentity.NewChickenRenderer;
 import cookie.random.core.block.RSBlocks;
-import cookie.random.client.model.BuilderRenderer;
-import cookie.random.core.entity.EntityPigman;
-import cookie.random.core.entity.EntityWaypoint;
-import cookie.random.core.entity.EntityBuilder;
-import cookie.random.client.model.WaypointRenderer;
+import cookie.random.core.newentity.NewMob;
+import cookie.random.core.newentity.NewMobs;
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.client.render.model.ModelChicken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import turniplabs.halplibe.helper.EntityHelper;
@@ -26,9 +23,8 @@ public class RandomStuff implements ModInitializer, GameStartEntrypoint {
 	@Override
 	public void beforeGameStart() {
 		RSBlocks.initializeBlocks();
-		EntityHelper.createEntity(EntityBuilder.class, 90, "Builder", BuilderRenderer::new);
-		EntityHelper.createEntity(EntityWaypoint.class, 91, "Waypoint", WaypointRenderer::new);
-		EntityHelper.createEntity(EntityPigman.class, 92, "pigman", () -> new PigmanRenderer(new PigmanModelVanilla(0.0F), 0.5F));
+		NewMobs.initializeNewMobs();
+		EntityHelper.createEntity(NewMobs.CHICKEN.getClass(), 100, NewMobs.CHICKEN.name, () -> new NewChickenRenderer(new ModelChicken()));
 	}
 
 	@Override

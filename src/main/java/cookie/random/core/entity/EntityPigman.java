@@ -7,29 +7,24 @@ import net.minecraft.core.WeightedRandomLootObject;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.EntityItem;
 import net.minecraft.core.entity.EntityPathfinder;
-import net.minecraft.core.entity.monster.EntityPigZombie;
 import net.minecraft.core.item.Item;
-import net.minecraft.core.item.ItemArmor;
-import net.minecraft.core.item.ItemFood;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.item.tool.ItemToolSword;
 import net.minecraft.core.util.helper.DamageType;
-import net.minecraft.core.util.phys.AABB;
 import net.minecraft.core.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class EntityPigman extends EntityPathfinder {
 	private static final boolean SHOULD_LOG_ACTIONS = true;
 
 	private int angerLevel = 0;
 	private int useTimer = 20;
-	private int timerUntilDoingSomething;
 	private int logTimer = 40;
 	private int digBuildTime = 10;
 	private int checkTimer = 100;
+	private boolean currentlyDoingSomething = false;
 	private ItemStack[] armorInventory = new ItemStack[4];
 	private ItemStack[] inventory = new ItemStack[36];
 
@@ -49,8 +44,6 @@ public class EntityPigman extends EntityPathfinder {
 		mobDrops.add(new WeightedRandomLootObject(Item.foodPorkchopRaw.getDefaultStack(), 1, 2));
 		mobDrops.add(new WeightedRandomLootObject(heldItem));
 		burningMobDrops.add(new WeightedRandomLootObject(Item.foodPorkchopCooked.getDefaultStack(), 1, 2));
-
-		timerUntilDoingSomething = 200 + random.nextInt(200);
 	}
 
 	@Override
@@ -93,136 +86,94 @@ public class EntityPigman extends EntityPathfinder {
 	}
 
 	private void log(String s) {
-		timerUntilDoingSomething = 40;
 		RandomStuff.LOGGER.info(s);
 	}
 
-	private void findRandomItem() {
-		log("I'm bored, I'll check if there's a random item nearby!");
-		if (angerLevel <= 0 && !dead) {
-			List<Entity> nearbyItems = this.world
-				.getEntitiesWithinAABBExcludingEntity(
-					this, AABB.getBoundingBoxFromPool(this.x, this.y, this.z, this.x + 1.0, this.y + 1.0, this.z + 1.0).expand(16.0, 4.0, 16.0)
-				);
-
-			if (!nearbyItems.isEmpty() && getHeldItem() == null) {
-				for (Entity entity : nearbyItems) {
-					if (entity instanceof EntityItem) {
-						EntityItem item = (EntityItem) entity;
-
-						if (item.item.stackSize > 0) setTarget(item);
-
-						if (bb.intersectsWith(item.bb)) {
-							setHeldItem(item.item);
-							item.remove();
-							timerUntilDoingSomething = 400 + random.nextInt(200);
-						}
-					}
-				}
+	private void selectRandomAction() {
+		if (angerLevel <= 0 && !currentlyDoingSomething && random.nextInt(20) == 0) {
+			int randomAction = random.nextInt(3);
+			switch (randomAction) {
+				case 0:
+					logTimer = 0;
+					log("I love wandering!");
+					break;
+				case 1:
+					shouldSearchNearbyItems = true;
+					currentlyDoingSomething = true;
+					break;
 			}
 		}
 	}
 
-	private void findAndEatFood() {
-		if (getHealth() < 20) {
-			if (logTimer-- <= 0) {
-				log("I don't feel so good! I'll try to find something to eat...");
-				logTimer = 40;
-			}
-			List<Entity> nearbyItems = this.world
-				.getEntitiesWithinAABB(
-					EntityItem.class, AABB.getBoundingBoxFromPool(this.x, this.y, this.z, this.x + 1.0, this.y + 1.0, this.z + 1.0).expand(16.0, 4.0, 16.0)
-				);
-			if (!nearbyItems.isEmpty() && getHeldItem() == null) {
-				for (Entity entity : nearbyItems) {
-
-					if (entity instanceof EntityItem) {
-						if (((EntityItem) entity).item.getItem() instanceof ItemFood) {
-							EntityItem item = (EntityItem) entity;
-
-							if (item.item.stackSize > 0) {
-								setTarget(item);
-							}
-
-							if (bb.intersectsWith(item.bb)) {
-								setHeldItem(item.item);
-								item.remove();
-							}
-						}
-					}
-				}
-			}
-
-			if (heldItem != null && heldItem.getItem() instanceof ItemFood) {
-				ItemFood food = (ItemFood) heldItem.getItem();
-
-				if (logTimer-- <= 0) {
-					logTimer = 40;
-					log("I found some food! Now I'll try to eat it.");
-				}
-
-				if (useTimer-- <= 0) {
-					useTimer = 20;
-					heal(food.getHealAmount());
-					setHeldItem(null);
-
-					if (food == Item.foodPorkchopRaw || food == Item.foodPorkchopCooked) {
-						world.createExplosion(this, x, y, z, 1);
-						hurt(null, 42, DamageType.GENERIC);
-					}
-				}
+	private void attempt(int attemptTimes, Runnable runnable) {
+		if (!dead) {
+			for (int i = 0; i < attemptTimes; i++) {
+				runnable.run();
 			}
 		}
 	}
 
-	private void findAndEquipArmor() {
-		if (heldItem != null && heldItem.getItem() instanceof ItemArmor) {
-			if (useTimer-- <= 0) {
-				if (getArmorInSlot(((ItemArmor) heldItem.getItem()).armorPiece) == null) {
-					armorInventory[((ItemArmor) heldItem.getItem()).armorPiece] = heldItem;
-					setHealthRaw(getHealth() + 2 * (((ItemArmor) heldItem.getItem()).material.renderIndex + 1));
+	private void putAwayHeldItem() {
+		if (heldItem != null) {
+			for (int i = 0; i < inventory.length; i++) {
+				ItemStack stackInSlot = inventory[i];
+				if (stackInSlot != null && stackInSlot.canStackWith(heldItem)) {
+					int transferAmount = Math.min(getHeldItem().stackSize, stackInSlot.getMaxStackSize() - stackInSlot.stackSize);
+					stackInSlot.stackSize += transferAmount;
+					getHeldItem().stackSize -= transferAmount;
+					stackInSlot.animationsToGo = 5;
 				} else {
-					EntityItem currentItem = new EntityItem(world, x, y, z, heldItem);
-					currentItem.setPos(x, y, z);
-					world.entityJoinedWorld(currentItem);
-					setHeldItem(null);
-				}
-
-				setHeldItem(null);
-				useTimer = 20;
-			}
-		}
-	}
-
-	private void checkForZombiePigs() {
-		if (checkTimer-- <= 0) {
-			checkTimer = 20;
-			List<Entity> entityList = world.getEntitiesWithinAABBExcludingEntity(this, bb.expand(32, 16, 32));
-
-			if (!entityList.isEmpty()) {
-				for (Entity entity : entityList) {
-					if (entity instanceof EntityPigZombie) {
-						EntityPigZombie zombie = (EntityPigZombie) entity;
-
-						if (armorInventory != null) roamRandomPath();
-						else entityToAttack = zombie;
+					if (heldItem != null) {
+						int transferAmount = Math.min(getHeldItem().stackSize, heldItem.getMaxStackSize());
+						this.inventory[i] = getHeldItem().copy();
+						this.inventory[i].stackSize = transferAmount;
+						this.inventory[i].animationsToGo = 5;
+						getHeldItem().stackSize -= transferAmount;
 					}
 				}
 			}
 		}
 	}
 
-	private void checkForAnimals() {
+	private void searchNearbyItems() {
+		log("I'm bored. I wonder if there's anything nearby?");
+		if (angerLevel <= 0.0F) {
+			attempt(4, () -> {
+				List<Entity> entityList = world.getEntitiesWithinAABBExcludingEntity(this, bb.expand(16, 8, 16));
 
+				if (!entityList.isEmpty()) {
+					for (Entity entity : entityList) {
+						if (entity instanceof EntityItem) {
+							EntityItem item = (EntityItem) entity;
+							if (logTimer-- <= 0) {
+								log("I see an item!");
+								logTimer = 20;
+							}
+
+							setTarget(entity);
+
+							if (getTarget().distanceTo(this) < 4.0F) {
+								if (heldItem != null) putAwayHeldItem();
+
+								heldItem = new ItemStack(item.item.getItem(), item.item.stackSize, item.item.getMetadata());
+								item.remove();
+
+								shouldSearchNearbyItems = false;
+								currentlyDoingSomething = false;
+							}
+						}
+					}
+				} else log("I don't see anything. Back to wandering.");
+			});
+		}
 	}
 
 	@Override
 	protected void updatePlayerActionState() {
 		super.updatePlayerActionState();
+		selectRandomAction();
 
-		findAndEatFood();
-		findAndEquipArmor();
-		checkForZombiePigs();
+		if (shouldSearchNearbyItems) searchNearbyItems();
 
 		if (swinging) {
 			swingTime++;
@@ -337,14 +288,24 @@ public class EntityPigman extends EntityPathfinder {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("AngerLevel", angerLevel);
 
-		ListTag nbtTagList = new ListTag();
+		ListTag armorInvList = new ListTag();
+		ListTag invList = new ListTag();
 
-		for (int i = 0; i < this.armorInventory.length; i++) {
-			if (this.armorInventory[i] != null) {
+		for (int i = 0; i < armorInventory.length; i++) {
+			if (armorInventory[i] != null) {
 				CompoundTag armorTag = new CompoundTag();
-				armorTag.putByte("Slot", (byte) i);
-				this.armorInventory[i].writeToNBT(armorTag);
-				nbtTagList.addTag(armorTag);
+				armorTag.putByte("ArmorSlot", (byte) i);
+				armorInventory[i].writeToNBT(armorTag);
+				armorInvList.addTag(armorTag);
+			}
+		}
+
+		for (int i = 0; i < inventory.length; i++) {
+			if (inventory[i] != null) {
+				CompoundTag itemTag = new CompoundTag();
+				itemTag.putByte("InvSlot", (byte) i);
+				inventory[i].writeToNBT(itemTag);
+				invList.addTag(itemTag);
 			}
 		}
 
@@ -354,7 +315,8 @@ public class EntityPigman extends EntityPathfinder {
 			tag.putCompound("HeldItem", heldItemNBT);
 		}
 
-		tag.put("Items", nbtTagList);
+		tag.put("ArmorItems", armorInvList);
+		tag.put("InvItems", invList);
 	}
 
 	@Override
@@ -368,14 +330,24 @@ public class EntityPigman extends EntityPathfinder {
 			if (stack != null) setHeldItem(stack);
 		}
 
-		ListTag nbtTagList = tag.getList("Items");
+		ListTag armorInvList = tag.getList("ArmorItems");
+		ListTag invList = tag.getList("InvItems");
 		this.armorInventory = new ItemStack[4];
+		this.inventory = new ItemStack[36];
 
-		for (int i = 0; i < nbtTagList.tagCount(); i++) {
-			CompoundTag armorTag = (CompoundTag)nbtTagList.tagAt(i);
-			int j = armorTag.getByte("Slot") & 255;
+		for (int i = 0; i < armorInvList.tagCount(); i++) {
+			CompoundTag armorTag = (CompoundTag)armorInvList.tagAt(i);
+			int j = armorTag.getByte("ArmorSlot") & 255;
 			if (j < this.armorInventory.length) {
 				this.armorInventory[j] = ItemStack.readItemStackFromNbt(armorTag);
+			}
+		}
+
+		for (int i = 0; i < invList.tagCount(); i++) {
+			CompoundTag armorTag = (CompoundTag)invList.tagAt(i);
+			int j = armorTag.getByte("InvSlot") & 255;
+			if (j < this.inventory.length) {
+				inventory[j] = ItemStack.readItemStackFromNbt(armorTag);
 			}
 		}
 	}

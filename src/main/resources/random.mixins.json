@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "cookie.random.mixin",
+  "package": "cookie.random.extra.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "EntityPigZombieMixin"
