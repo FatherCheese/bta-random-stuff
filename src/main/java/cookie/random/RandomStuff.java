@@ -1,10 +1,10 @@
 package cookie.random;
 
 import cookie.random.core.block.RSBlocks;
-import cookie.random.core.entity.BuilderRenderer;
+import cookie.random.client.renderer.entity.BuilderRenderer;
 import cookie.random.core.entity.EntityWaypoint;
 import cookie.random.core.entity.EntityBuilder;
-import cookie.random.core.entity.WaypointRenderer;
+import cookie.random.client.renderer.entity.WaypointRenderer;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

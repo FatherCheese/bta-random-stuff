@@ -1,4 +1,4 @@
-package cookie.random.core.block.color;
+package cookie.random.client.renderer.block;
 
 import net.minecraft.client.render.block.color.BlockColorCustom;
 import net.minecraft.client.render.colorizer.Colorizer;

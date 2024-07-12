@@ -1,5 +1,6 @@
-package cookie.random.core.entity;
+package cookie.random.client.renderer.entity;
 
+import cookie.random.core.entity.EntityBuilder;
 import net.minecraft.client.render.entity.LivingRenderer;
 import net.minecraft.client.render.model.ModelPlayer;
 

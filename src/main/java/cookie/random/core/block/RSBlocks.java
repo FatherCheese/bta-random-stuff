@@ -1,6 +1,6 @@
 package cookie.random.core.block;
 
-import cookie.random.core.block.color.BlockColorCoral;
+import cookie.random.client.renderer.block.BlockColorCoral;
 import net.minecraft.core.block.Block;
 import turniplabs.halplibe.helper.BlockBuilder;
 
