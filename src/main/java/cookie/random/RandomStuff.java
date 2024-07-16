@@ -1,14 +1,9 @@
 package cookie.random;
 
-import cookie.random.core.block.RSBlocks;
-import cookie.random.client.renderer.entity.BuilderRenderer;
-import cookie.random.core.entity.EntityWaypoint;
-import cookie.random.core.entity.EntityBuilder;
-import cookie.random.client.renderer.entity.WaypointRenderer;
+import cookie.random.core.RSBlocks;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import turniplabs.halplibe.helper.EntityHelper;
 import turniplabs.halplibe.util.GameStartEntrypoint;
 
 
@@ -23,8 +18,6 @@ public class RandomStuff implements ModInitializer, GameStartEntrypoint {
 	@Override
 	public void beforeGameStart() {
 		RSBlocks.initializeBlocks();
-		EntityHelper.createEntity(EntityBuilder.class, 90, "Builder", BuilderRenderer::new);
-		EntityHelper.createEntity(EntityWaypoint.class, 91, "Waypoint", WaypointRenderer::new);
 	}
 
 	@Override
