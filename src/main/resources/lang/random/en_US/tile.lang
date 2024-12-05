@@ -1,4 +1,2 @@
-tile.random.coral.name=Coral
-tile.random.coral.desc=
-tile.random.raw_quartz.name=Raw Quartz
-tile.random.raw_quartz.desc=A vibrant crystal block that shifts color.
+tile.random.small_cog.name=Small Cog
+tile.random.small_cog.desc=A small wooden cog capable of transporting rotational energy.
