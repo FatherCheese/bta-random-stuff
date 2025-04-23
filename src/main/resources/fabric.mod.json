@@ -27,8 +27,14 @@
 		"afterGameStart": [
           "cookie.random.RandomStuff"
 		],
-		"recipesReady": [
-          "cookie.random.RandomStuff"
+		"client": [
+			"cookie.random.extra.RandomStuffClient"
+		],
+		"beforeClientStart": [
+			"cookie.random.extra.RandomStuffClient"
+		],
+		"afterClientStart": [
+			"cookie.random.extra.RandomStuffClient"
 		]
 	},
   "mixins": [
