@@ -22,19 +22,25 @@
       "cookie.random.RandomStuff"
     ],
 		"beforeGameStart": [
-          "cookie.random.RandomStuff"
+			"cookie.random.RandomStuff"
 		],
 		"afterGameStart": [
-          "cookie.random.RandomStuff"
+			"cookie.random.RandomStuff"
 		],
 		"client": [
-			"cookie.random.extra.RandomStuffClient"
+			"cookie.random.RandomStuffClient"
 		],
 		"beforeClientStart": [
-			"cookie.random.extra.RandomStuffClient"
+			"cookie.random.RandomStuffClient"
 		],
 		"afterClientStart": [
-			"cookie.random.extra.RandomStuffClient"
+			"cookie.random.RandomStuffClient"
+		],
+		"initModels": [
+			"cookie.random.client.RSModels"
+		],
+		"afterItemInit": [
+			"cookie.random.core.item.RSItems"
 		]
 	},
   "mixins": [
@@ -42,7 +48,6 @@
   ],
 
   "depends": {
-		"minecraft": "7.1",
     "fabricloader": ">=0.15.5"
   },
   "suggests": {

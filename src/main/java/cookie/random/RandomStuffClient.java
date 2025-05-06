@@ -1,4 +1,4 @@
-package cookie.random.extra;
+package cookie.random;
 
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
