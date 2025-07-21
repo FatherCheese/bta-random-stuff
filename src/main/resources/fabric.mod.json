@@ -19,16 +19,25 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "cookie.random.RandomStuff"
+			"cookie.random.core.RandomStuff"
     ],
 		"beforeGameStart": [
-          "cookie.random.RandomStuff"
+			"cookie.random.core.RandomStuff"
 		],
 		"afterGameStart": [
-          "cookie.random.RandomStuff"
+			"cookie.random.core.RandomStuff"
 		],
-		"recipesReady": [
-          "cookie.random.RandomStuff"
+		"client": [
+			"cookie.random.client.RandomStuffClient"
+		],
+		"beforeClientStart": [
+			"cookie.random.client.RandomStuffClient"
+		],
+		"afterClientStart": [
+			"cookie.random.client.RandomStuffClient"
+		],
+		"initModels": [
+			"cookie.random.client.model.RSModels"
 		]
 	},
   "mixins": [

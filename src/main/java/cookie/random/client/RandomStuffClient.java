@@ -1,0 +1,29 @@
+package cookie.random.client;
+
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import turniplabs.halplibe.util.ClientStartEntrypoint;
+
+@Environment(EnvType.CLIENT)
+public class RandomStuffClient implements ClientModInitializer, ClientStartEntrypoint {
+	public static final String MOD_ID = "random|client";
+	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	@Override
+	public void onInitializeClient() {
+		LOGGER.info("Random Stuff Client initialized. Have fun experimenting!");
+	}
+
+	@Override
+	public void beforeClientStart() {
+
+	}
+
+	@Override
+	public void afterClientStart() {
+
+	}
+}
